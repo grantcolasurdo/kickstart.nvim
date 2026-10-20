@@ -745,6 +745,7 @@ do
     -- rust_analyzer = {},
 
     stylua = {}, -- Used to format Lua code
+    rust_analyzer = {};
 
     -- Special Lua Config, as recommended by neovim help docs
     lua_ls = {
@@ -872,6 +873,23 @@ do
   -- require('luasnip.loaders.from_vscode').lazy_load()
 
   -- [[ Autocomplete Engine ]]
+  --
+  -- Add minuet-ai.nvim (AI completion source)
+  vim.pack.add { gh 'milanglacier/minuet-ai.nvim' }
+  require('minuet').setup {
+    -- Your Ollama provider configuration, add according to your actual setup
+    request_timeout = 15,
+    provider = 'openai_fim_compatible',
+    context_window = 512,
+    provider_options = {
+      openai_fim_compatible = {
+        api_key = 'TERM',
+        name = 'Ollama',
+        end_point = 'http://enki.gc-sz.net:11434/v1/completions',
+        model = 'qwen2.5-coder:latest',
+      },
+    },
+  }
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
   require('blink.cmp').setup {
     keymap = {
@@ -897,6 +915,7 @@ do
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
       preset = 'default',
+      ['<A-y>'] = require('minuet').make_blink_map(),
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -908,14 +927,23 @@ do
       nerd_font_variant = 'mono',
     },
 
-    completion = {
+    sources = {
+      default = { 'lsp', 'path', 'snippets', 'minuet'},
+      providers = {
+        minuet = {
+          name = 'minuet',
+          module = 'minuet.blink',
+          async = true,
+          timeout_ms = 3000,
+          score_offset = 50,
+        },
+      },
+    },
+    completion = { 
       -- By default, you may press `<c-space>` to show the documentation.
       -- Optionally, set `auto_show = true` to show the documentation after a delay.
       documentation = { auto_show = false, auto_show_delay_ms = 500 },
-    },
-
-    sources = {
-      default = { 'lsp', 'path', 'snippets' },
+      trigger = { prefetch_on_insert = false },
     },
 
     snippets = { preset = 'luasnip' },
